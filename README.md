@@ -1,5 +1,5 @@
 # Transactions proof of concept
-C# Transactions proof of concept using a System.Data library and NoSQL library
+C# Transactions proof of concept using a System.Data library and a NoSQL library without built in transaction support.
 
 --
 
@@ -34,18 +34,18 @@ using (var trans = TransactionFactory.NewTransaction())
     nosqlTry.Should().NotBe(nosqlExpected);
 
 
-    var nosqlTrans = trans.ChildTransaction();
-    var nosqlRm = nosqlTrans.EnlistNosqlResourceManager();
-
-    nosqlRm.Add(() => NoSqlContext.Simple.Update(nosqlTry), () => NoSqlContext.Simple.Update(nosqlExpected));
-    nosqlTrans.Complete();
-
-
     var sqlTrans = trans.ChildTransaction();
     sqlTrans.EnlistSqlResourceManager(() => SqlContext.GetConnection());
 
     SqlContext.Update(sqlTry);
     sqlTrans.Complete();
+
+
+    var nosqlTrans = trans.ChildTransaction();
+    var nosqlRm = nosqlTrans.EnlistNosqlResourceManager();
+
+    nosqlRm.Add(() => NoSqlContext.Simple.Update(nosqlTry), () => NoSqlContext.Simple.Update(nosqlExpected));
+    nosqlTrans.Complete();
 
     trans.Rollback();
 }
